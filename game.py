@@ -2,7 +2,7 @@ import random
 import sys
 
 import pygame
-from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP
+from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL
 
 X_MAX = 800
 Y_MAX = 600
@@ -28,19 +28,51 @@ class Star(pygame.sprite.Sprite):
             self.rect.center = (x, 0)
         else:
             self.rect.center = (x, y + 5)
-                           
+
+class BulletSprite(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super(BulletSprite, self).__init__()
+        self.image = pygame.Surface((10,10))
+        for i in range(5,0,-1):
+            color = 255.0 * float(i)/5
+            pygame.draw.circle(self.image, 
+                               (0, 0, color), 
+                               (5,5),
+                               i,
+                               0)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y-25)
+
+    def update(self):
+        x, y = self.rect.center
+        y -= 20
+        self.rect.center = x, y
+        if y <= 0:
+            self.kill()
+        
 
 class ShipSprite(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, groups):
         super(ShipSprite, self).__init__()
         self.image = pygame.image.load("ship.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = (X_MAX/2, Y_MAX - 40)
         self.dx = self.dy = 0 
+        self.firing = self.shot = False
+        
+        self.groups = groups
 
     def update(self):
+        # Handle movement
         x, y = self.rect.center
         self.rect.center = x + self.dx, y + self.dy
+
+        # Handle firing
+        if self.firing:
+            self.shot = BulletSprite(x, y)
+            self.shot.add(self.groups)
+
+        
 
     def steer(self, direction, operation):
         v = 10
@@ -59,6 +91,11 @@ class ShipSprite(pygame.sprite.Sprite):
             if direction in (LEFT, RIGHT):
                 self.dx = 0
 
+    def shoot(self, operation):
+        if operation == START:
+            self.firing = True
+        if operation == STOP:
+            self.firing = False
 
 
 def create_starfield(group):
@@ -66,7 +103,6 @@ def create_starfield(group):
         x,y = random.randrange(X_MAX), random.randrange(Y_MAX)
         s = Star(x, y)
         s.add(group)
-        
 
 
 def main():
@@ -77,8 +113,9 @@ def main():
 
     starfield = create_starfield(everything)
 
-    ship = ShipSprite()
+    ship = ShipSprite(everything)
     ship.add(everything)
+
 
     while True:
         clock.tick(30)
@@ -96,6 +133,8 @@ def main():
                     ship.steer(RIGHT, START)
                 if event.key == K_UP:    
                     ship.steer(UP, START)
+                if event.key == K_LCTRL:
+                    ship.shoot(START)
 
             if event.type == KEYUP:
                 if event.key == K_DOWN:  
@@ -106,7 +145,8 @@ def main():
                     ship.steer(RIGHT, STOP)
                 if event.key == K_UP:    
                     ship.steer(UP, STOP)
-
+                if event.key == K_LCTRL:
+                    ship.shoot(STOP)
             
 
         # Update sprites
