@@ -2,12 +2,13 @@ import random
 import sys
 
 import pygame
-from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT
+from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP
 
 X_MAX = 800
 Y_MAX = 600
 
 LEFT, RIGHT, UP, DOWN = 0, 1, 3, 4
+START, STOP = 0, 1
 
 class Star(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -35,19 +36,29 @@ class ShipSprite(pygame.sprite.Sprite):
         self.image = pygame.image.load("ship.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.center = (X_MAX/2, Y_MAX - 40)
+        self.dx = self.dy = 0 
 
     def update(self):
-        pass
-
-    def move(self, direction):
-        v = 1
-        dx, dy = {UP : (0, -v),
-                  DOWN : (0, v),
-                  LEFT : (-v, 0),
-                  RIGHT : (v, 0)}[direction]
-
         x, y = self.rect.center
-        self.rect.center = x + dx, y + dy
+        self.rect.center = x + self.dx, y + self.dy
+
+    def steer(self, direction, operation):
+        v = 10
+        if operation == START:
+            if direction in (UP, DOWN):
+                self.dy = {UP   : -v,
+                           DOWN : v}[direction]
+
+            if direction in (LEFT, RIGHT):
+                self.dx = {LEFT  : -v,
+                           RIGHT : v}[direction]
+
+        if operation == STOP:
+            if direction in (UP, DOWN):
+                self.dy = 0
+            if direction in (LEFT, RIGHT):
+                self.dx = 0
+
 
 
 def create_starfield(group):
@@ -78,13 +89,23 @@ def main():
 
             if event.type == KEYDOWN:
                 if event.key == K_DOWN:  
-                    ship.move(DOWN)
+                    ship.steer(DOWN, START)
                 if event.key == K_LEFT:  
-                    ship.move(LEFT)
+                    ship.steer(LEFT, START)
                 if event.key == K_RIGHT: 
-                    ship.move(RIGHT)
+                    ship.steer(RIGHT, START)
                 if event.key == K_UP:    
-                    ship.move(UP)
+                    ship.steer(UP, START)
+
+            if event.type == KEYUP:
+                if event.key == K_DOWN:  
+                    ship.steer(DOWN, STOP)
+                if event.key == K_LEFT:  
+                    ship.steer(LEFT, STOP)
+                if event.key == K_RIGHT: 
+                    ship.steer(RIGHT, STOP)
+                if event.key == K_UP:    
+                    ship.steer(UP, STOP)
 
             
 
