@@ -10,11 +10,11 @@ Y_MAX = 600
 class Star(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super(Star,self).__init__()
-        self.image = pygame.Surface((3,3))
+        self.image = pygame.Surface((2,2))
         pygame.draw.circle(self.image, 
-                           (255, 255, 255), 
+                           (128, 128, 200), 
                            (0,0),
-                           3,
+                           2,
                            0)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -27,23 +27,35 @@ class Star(pygame.sprite.Sprite):
             self.rect.center = (x, y + 5)
                            
 
-def create_starfield():
-    starfield = pygame.sprite.Group()
+class ShipSprite(pygame.sprite.Sprite):
+    def __init__(self):
+        super(ShipSprite, self).__init__()
+        self.image = pygame.image.load("ship.png").convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.center = (X_MAX/2, Y_MAX - 40)
+
+    def update(self):
+        pass
+
+def create_starfield(group):
     for i in range(100):
         x,y = random.randrange(X_MAX), random.randrange(Y_MAX)
         s = Star(x, y)
-        s.add(starfield)
+        s.add(group)
         
-    return starfield
-
 
 
 def main():
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
+    everything = pygame.sprite.Group()
     empty = pygame.Surface((X_MAX, Y_MAX))
     clock = pygame.time.Clock()
 
-    starfield = create_starfield()
+    starfield = create_starfield(everything)
+
+    ship = ShipSprite()
+    ship.add(everything)
+
     while True:
         clock.tick(30)
         # Check for input
@@ -52,9 +64,9 @@ def main():
                 sys.exit()
 
         # Update sprites
-        starfield.clear(screen, empty)
-        starfield.update()
-        starfield.draw(screen)
+        everything.clear(screen, empty)
+        everything.update()
+        everything.draw(screen)
         pygame.display.flip()
 
     
