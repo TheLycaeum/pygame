@@ -1,7 +1,8 @@
 import random
+import sys
 
 import pygame
-from pygame.locals import Rect, DOUBLEBUF
+from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN
 
 X_MAX = 800
 Y_MAX = 600
@@ -45,7 +46,12 @@ def main():
     starfield = create_starfield()
     while True:
         clock.tick(30)
+        # Check for input
+        for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                sys.exit()
 
+        # Update sprites
         starfield.clear(screen, empty)
         starfield.update()
         starfield.draw(screen)
