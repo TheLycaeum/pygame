@@ -72,6 +72,22 @@ class EnemySprite(pygame.sprite.Sprite):
 
         self.rect.center = x, y
 
+class StatusSprite(pygame.sprite.Sprite):
+    def __init__(self, ship, groups):
+        super(StatusSprite, self).__init__()
+        self.image = pygame.Surface((X_MAX,30))
+        self.rect = self.image.get_rect()
+        self.rect.bottomleft = 0, Y_MAX
+
+        default_font = pygame.font.get_default_font()
+        self.font = pygame.font.Font(default_font,20)
+
+        self.ship = ship
+        self.add(groups)
+
+    def update(self):
+        score = self.font.render("Health : {}".format(self.ship.health),True,(150, 50, 50))
+        self.image.blit(score,(0,0))
 
 class ShipSprite(pygame.sprite.Sprite):
     def __init__(self, groups):
@@ -81,6 +97,7 @@ class ShipSprite(pygame.sprite.Sprite):
         self.rect.center = (X_MAX/2, Y_MAX - 40)
         self.dx = self.dy = 0 
         self.firing = self.shot = False
+        self.health = 100
         
         self.groups = groups
         
@@ -129,6 +146,7 @@ def create_starfield(group):
 
 
 def main():
+    pygame.font.init()
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     everything = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
@@ -141,6 +159,8 @@ def main():
     ship = ShipSprite(everything)
     ship.add(everything)
 
+    status = StatusSprite(ship, everything)
+    
     for i in range(10):
         pos = random.randint(0, X_MAX)
         EnemySprite(pos, [everything, enemies])
@@ -179,7 +199,6 @@ def main():
 
         # Check for impact
         hit_ships = pygame.sprite.spritecollide(ship, enemies, True)
-        print hit_ships
 
         # Update sprites
         everything.clear(screen, empty)
