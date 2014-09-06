@@ -91,7 +91,7 @@ class StatusSprite(pygame.sprite.Sprite):
         self.image.blit(score,(0,0))
 
 class ShipSprite(pygame.sprite.Sprite):
-    def __init__(self, groups):
+    def __init__(self, groups, weapon_groups):
         super(ShipSprite, self).__init__()
         self.image = pygame.image.load("ship.png").convert_alpha()
         self.rect = self.image.get_rect()
@@ -100,7 +100,8 @@ class ShipSprite(pygame.sprite.Sprite):
         self.firing = self.shot = False
         self.health = 100
         
-        self.groups = groups
+        self.groups = [groups, weapon_groups]
+
         
 
     def update(self):
@@ -112,6 +113,7 @@ class ShipSprite(pygame.sprite.Sprite):
         if self.firing:
             self.shot = BulletSprite(x, y)
             self.shot.add(self.groups)
+            
 
         if self.health < 0:
             self.kill()
@@ -154,13 +156,14 @@ def main():
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     everything = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
+    weapon_fire = pygame.sprite.Group()
 
     empty = pygame.Surface((X_MAX, Y_MAX))
     clock = pygame.time.Clock()
 
     starfield = create_starfield(everything)
 
-    ship = ShipSprite(everything)
+    ship = ShipSprite(everything, weapon_fire)
     ship.add(everything)
 
     status = StatusSprite(ship, everything)
@@ -214,6 +217,16 @@ def main():
             else:
                 sys.exit()
             
+        # Check for successful attacks
+        hit_ships = pygame.sprite.groupcollide(enemies, weapon_fire, True, True)
+        for k,v in hit_ships.iteritems():
+            k.kill()
+            for i in v:
+                i.kill()
+        
+        if len(enemies) < 10:
+            pos = random.randint(0, X_MAX)
+            EnemySprite(pos, [everything, enemies])
 
         # Update sprites
         everything.clear(screen, empty)
