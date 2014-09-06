@@ -27,7 +27,7 @@ class Star(pygame.sprite.Sprite):
         if self.rect.center[1] > Y_MAX:
             self.rect.center = (x, 0)
         else:
-            self.rect.center = (x, y + 5)
+            self.rect.center = (x, y + 1)
 
 class BulletSprite(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -50,6 +50,28 @@ class BulletSprite(pygame.sprite.Sprite):
         if y <= 0:
             self.kill()
         
+class EnemySprite(pygame.sprite.Sprite):
+    def __init__(self, x_pos, groups):
+        super(EnemySprite, self).__init__()
+        self.image = pygame.image.load("enemy.png").convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x_pos, 0)
+
+        self.velocity = random.randint(3, 10)
+
+        self.add(groups)
+
+    def update(self):
+        x, y = self.rect.center
+
+        if y > Y_MAX:
+            x, y = random.randint(0, X_MAX), 0
+            self.velocity = random.randint(3, 10)
+        else:
+            x, y = x, y+ self.velocity
+
+        self.rect.center = x, y
+
 
 class ShipSprite(pygame.sprite.Sprite):
     def __init__(self, groups):
@@ -61,6 +83,7 @@ class ShipSprite(pygame.sprite.Sprite):
         self.firing = self.shot = False
         
         self.groups = groups
+        
 
     def update(self):
         # Handle movement
@@ -115,6 +138,10 @@ def main():
 
     ship = ShipSprite(everything)
     ship.add(everything)
+
+    for i in range(10):
+        pos = random.randint(0, X_MAX)
+        EnemySprite(pos, everything)
 
 
     while True:
