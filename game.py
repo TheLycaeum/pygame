@@ -87,6 +87,7 @@ class StatusSprite(pygame.sprite.Sprite):
 
     def update(self):
         score = self.font.render("Health : {}".format(self.ship.health),True,(150, 50, 50))
+        self.image.fill((0,0,0))
         self.image.blit(score,(0,0))
 
 class ShipSprite(pygame.sprite.Sprite):
@@ -199,6 +200,8 @@ def main():
 
         # Check for impact
         hit_ships = pygame.sprite.spritecollide(ship, enemies, True)
+        for i in hit_ships:
+            ship.health -= 15
 
         # Update sprites
         everything.clear(screen, empty)
