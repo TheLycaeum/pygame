@@ -131,6 +131,8 @@ def create_starfield(group):
 def main():
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     everything = pygame.sprite.Group()
+    enemies = pygame.sprite.Group()
+
     empty = pygame.Surface((X_MAX, Y_MAX))
     clock = pygame.time.Clock()
 
@@ -141,7 +143,7 @@ def main():
 
     for i in range(10):
         pos = random.randint(0, X_MAX)
-        EnemySprite(pos, everything)
+        EnemySprite(pos, [everything, enemies])
 
 
     while True:
@@ -174,7 +176,10 @@ def main():
                     ship.steer(UP, STOP)
                 if event.key == K_LCTRL:
                     ship.shoot(STOP)
-            
+
+        # Check for impact
+        hit_ships = pygame.sprite.spritecollide(ship, enemies, True)
+        print hit_ships
 
         # Update sprites
         everything.clear(screen, empty)
