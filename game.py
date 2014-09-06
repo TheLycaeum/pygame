@@ -113,6 +113,9 @@ class ShipSprite(pygame.sprite.Sprite):
             self.shot = BulletSprite(x, y)
             self.shot.add(self.groups)
 
+        if self.health < 0:
+            self.kill()
+
         
 
     def steer(self, direction, operation):
@@ -161,7 +164,9 @@ def main():
     ship.add(everything)
 
     status = StatusSprite(ship, everything)
-    
+
+    deadtimer = 30
+
     for i in range(10):
         pos = random.randint(0, X_MAX)
         EnemySprite(pos, [everything, enemies])
@@ -202,6 +207,13 @@ def main():
         hit_ships = pygame.sprite.spritecollide(ship, enemies, True)
         for i in hit_ships:
             ship.health -= 15
+
+        if ship.health < 0:
+            if deadtimer:
+                deadtimer -= 1
+            else:
+                sys.exit()
+            
 
         # Update sprites
         everything.clear(screen, empty)
