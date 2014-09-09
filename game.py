@@ -2,7 +2,7 @@ import random
 import sys
 
 import pygame
-from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL
+from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN
 
 X_MAX = 800
 Y_MAX = 600
@@ -138,6 +138,7 @@ class ShipSprite(pygame.sprite.Sprite):
         
         self.groups = [groups, weapon_groups]
 
+        self.mega = 1
         
 
     def update(self):
@@ -237,6 +238,13 @@ def main():
                     ship.steer(UP, START)
                 if event.key == K_LCTRL:
                     ship.shoot(START)
+                if event.key == K_RETURN:
+                    if ship.mega:
+                        ship.mega -= 1
+                        for i in enemies:
+                            i.kill()
+                        
+                        
 
             if event.type == KEYUP:
                 if event.key == K_DOWN:  
@@ -249,6 +257,7 @@ def main():
                     ship.steer(UP, STOP)
                 if event.key == K_LCTRL:
                     ship.shoot(STOP)
+
 
         # Check for impact
         hit_ships = pygame.sprite.spritecollide(ship, enemies, True)
