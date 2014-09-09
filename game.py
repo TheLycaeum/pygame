@@ -60,6 +60,8 @@ class EnemySprite(pygame.sprite.Sprite):
         self.velocity = random.randint(3, 10)
 
         self.add(groups)
+        self.explosion_sound = pygame.mixer.Sound("Arcade Explo A.wav")
+        self.explosion_sound.set_volume(0.4)
 
     def update(self):
         x, y = self.rect.center
@@ -72,6 +74,11 @@ class EnemySprite(pygame.sprite.Sprite):
 
         self.rect.center = x, y
 
+    def kill(self):
+        x, y = self.rect.center
+        if pygame.mixer.get_init():
+            self.explosion_sound.play(maxtime=1000)
+        super(EnemySprite, self).kill()
 class StatusSprite(pygame.sprite.Sprite):
     def __init__(self, ship, groups):
         super(StatusSprite, self).__init__()
@@ -153,6 +160,7 @@ def create_starfield(group):
 
 def main():
     pygame.font.init()
+    pygame.mixer.init()
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
     everything = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
@@ -173,6 +181,14 @@ def main():
     for i in range(10):
         pos = random.randint(0, X_MAX)
         EnemySprite(pos, [everything, enemies])
+    
+    # Get some music
+    if pygame.mixer.get_init():
+        pygame.mixer.music.load("DST-AngryMod.mp3")
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)
+
+        
 
 
     while True:
