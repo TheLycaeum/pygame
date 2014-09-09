@@ -49,13 +49,26 @@ class Star(pygame.sprite.Sprite):
                            0)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+        self.velocity = 1
+        self.size = 1
+    
+    def accelerate(self):
+        if self.size < 20:
+            self.size += 1
+            self.image = pygame.Surface((self.size, self.size))
+            pygame.draw.line(self.image, (128, 128, 128), (0,0), (0, self.size))
+
+        if self.velocity < Y_MAX/5:
+            self.velocity += 1
+
+        
     
     def update(self):
         x, y = self.rect.center
         if self.rect.center[1] > Y_MAX:
             self.rect.center = (x, 0)
         else:
-            self.rect.center = (x, y + 1)
+            self.rect.center = (x, y + self.velocity)
 
 class BulletSprite(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -108,6 +121,7 @@ class EnemySprite(pygame.sprite.Sprite):
             self.explosion_sound.play(maxtime=1000)
             Explosion(x, y)
         super(EnemySprite, self).kill()
+
 class StatusSprite(pygame.sprite.Sprite):
     def __init__(self, ship, groups):
         super(StatusSprite, self).__init__()
@@ -122,7 +136,7 @@ class StatusSprite(pygame.sprite.Sprite):
         self.add(groups)
 
     def update(self):
-        score = self.font.render("Health : {}".format(self.ship.health),True,(150, 50, 50))
+        score = self.font.render("Health : {} Score : {}".format(self.ship.health, self.ship.score),True,(150, 50, 50))
         self.image.fill((0,0,0))
         self.image.blit(score,(0,0))
 
@@ -135,26 +149,43 @@ class ShipSprite(pygame.sprite.Sprite):
         self.dx = self.dy = 0 
         self.firing = self.shot = False
         self.health = 100
+        self.score = 0
         
         self.groups = [groups, weapon_groups]
 
         self.mega = 1
+
+        self.autopilot = False
+        self.in_position = False
         
 
     def update(self):
-        # Handle movement
         x, y = self.rect.center
-        self.rect.center = x + self.dx, y + self.dy
 
-        # Handle firing
-        if self.firing:
-            self.shot = BulletSprite(x, y)
-            self.shot.add(self.groups)
-            
+        if not self.autopilot:
+            # Handle movement
+            self.rect.center = x + self.dx, y + self.dy
 
-        if self.health < 0:
-            self.kill()
+            # Handle firing
+            if self.firing:
+                self.shot = BulletSprite(x, y)
+                self.shot.add(self.groups)
 
+
+            if self.health < 0:
+                self.kill()
+        else:
+            if not self.in_position:
+                if x != X_MAX/2:
+                    x += (abs(X_MAX/2 - x)/(X_MAX/2 - x)) * 2
+                if y != Y_MAX - 100:
+                    y += (abs(Y_MAX - y)/(Y_MAX - y)) * 2
+
+                if x == X_MAX/2 and y == Y_MAX - 100:
+                    self.in_position = True
+            else:
+                y -= 10
+            self.rect.center = x, y
         
 
     def steer(self, direction, operation):
@@ -182,13 +213,18 @@ class ShipSprite(pygame.sprite.Sprite):
 
 
 def create_starfield(group):
+    stars = []
     for i in range(100):
         x,y = random.randrange(X_MAX), random.randrange(Y_MAX)
         s = Star(x, y)
         s.add(group)
+        stars.append(s)
+    return stars
 
 
 def main():
+    game_over = False
+
     pygame.font.init()
     pygame.mixer.init()
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
@@ -198,7 +234,7 @@ def main():
     empty = pygame.Surface((X_MAX, Y_MAX))
     clock = pygame.time.Clock()
 
-    starfield = create_starfield(everything)
+    stars = create_starfield(everything)
 
     ship = ShipSprite(everything, weapon_fire)
     ship.add(everything)
@@ -206,6 +242,7 @@ def main():
     status = StatusSprite(ship, everything)
 
     deadtimer = 30
+    credits_timer = 150
 
     for i in range(10):
         pos = random.randint(0, X_MAX)
@@ -226,37 +263,37 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 sys.exit()
+            if not game_over:
+                if event.type == KEYDOWN:
+                    if event.key == K_DOWN:  
+                        ship.steer(DOWN, START)
+                    if event.key == K_LEFT:  
+                        ship.steer(LEFT, START)
+                    if event.key == K_RIGHT: 
+                        ship.steer(RIGHT, START)
+                    if event.key == K_UP:    
+                        ship.steer(UP, START)
+                    if event.key == K_LCTRL:
+                        ship.shoot(START)
+                    if event.key == K_RETURN:
+                        if ship.mega:
+                            ship.mega -= 1
+                            for i in enemies:
+                                i.kill()
 
-            if event.type == KEYDOWN:
-                if event.key == K_DOWN:  
-                    ship.steer(DOWN, START)
-                if event.key == K_LEFT:  
-                    ship.steer(LEFT, START)
-                if event.key == K_RIGHT: 
-                    ship.steer(RIGHT, START)
-                if event.key == K_UP:    
-                    ship.steer(UP, START)
-                if event.key == K_LCTRL:
-                    ship.shoot(START)
-                if event.key == K_RETURN:
-                    if ship.mega:
-                        ship.mega -= 1
-                        for i in enemies:
-                            i.kill()
-                        
-                        
 
-            if event.type == KEYUP:
-                if event.key == K_DOWN:  
-                    ship.steer(DOWN, STOP)
-                if event.key == K_LEFT:  
-                    ship.steer(LEFT, STOP)
-                if event.key == K_RIGHT: 
-                    ship.steer(RIGHT, STOP)
-                if event.key == K_UP:    
-                    ship.steer(UP, STOP)
-                if event.key == K_LCTRL:
-                    ship.shoot(STOP)
+
+                if event.type == KEYUP:
+                    if event.key == K_DOWN:  
+                        ship.steer(DOWN, STOP)
+                    if event.key == K_LEFT:  
+                        ship.steer(LEFT, STOP)
+                    if event.key == K_RIGHT: 
+                        ship.steer(RIGHT, STOP)
+                    if event.key == K_UP:    
+                        ship.steer(UP, STOP)
+                    if event.key == K_LCTRL:
+                        ship.shoot(STOP)
 
 
         # Check for impact
@@ -276,10 +313,29 @@ def main():
             k.kill()
             for i in v:
                 i.kill()
+                ship.score += 10
         
-        if len(enemies) < 10:
+        if len(enemies) < 40 and not game_over:
             pos = random.randint(0, X_MAX)
             EnemySprite(pos, [everything, enemies])
+
+        # Check for game over
+        if ship.score > 1000:
+            game_over = True
+            for i in enemies:
+                i.kill()
+
+            ship.autopilot = True
+            ship.shoot(STOP)
+
+        if game_over:
+            for i in stars:
+                i.accelerate()
+            if credits_timer:
+                credits_timer -= 1
+            else:
+                sys.exit()
+
 
         # Update sprites
         everything.clear(screen, empty)
