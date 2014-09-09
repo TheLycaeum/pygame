@@ -169,6 +169,7 @@ class ShipSprite(pygame.sprite.Sprite):
 
         self.autopilot = False
         self.in_position = False
+        self.velocity = 2
         
 
     def update(self):
@@ -191,12 +192,14 @@ class ShipSprite(pygame.sprite.Sprite):
                 if x != X_MAX/2:
                     x += (abs(X_MAX/2 - x)/(X_MAX/2 - x)) * 2
                 if y != Y_MAX - 100:
-                    y += (abs(Y_MAX - y)/(Y_MAX - y)) * 2
+                    y += (abs(Y_MAX - 100 - y)/(Y_MAX - 100 - y)) * 2
 
                 if x == X_MAX/2 and y == Y_MAX - 100:
                     self.in_position = True
             else:
-                y -= 10
+                y -= self.velocity
+                self.velocity *= 1.5
+                if y <=0 : y = -30
             self.rect.center = x, y
         
 
@@ -341,7 +344,7 @@ def main():
             ship.shoot(STOP)
 
         if game_over:
-            pygame.mixer.music.fadeout(4000)
+            pygame.mixer.music.fadeout(8000)
             for i in stars:
                 i.accelerate()
             if credits_timer:
