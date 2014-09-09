@@ -10,6 +10,34 @@ Y_MAX = 600
 LEFT, RIGHT, UP, DOWN = 0, 1, 3, 4
 START, STOP = 0, 1
 
+everything = pygame.sprite.Group()
+
+
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super(Explosion, self).__init__()
+        sheet = pygame.image.load("x.png")
+        self.images = []
+        for i in range(0, 768, 48):
+            rect = pygame.Rect((i, 0, 48, 48))
+            image = pygame.Surface(rect.size)
+            image.blit(sheet, (0, 0), rect)
+            self.images.append(image)
+        
+        self.image = self.images[0]
+        self.index = 0
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.add(everything)
+    
+    def update(self):
+        self.image = self.images[self.index]
+        self.index += 1
+        if self.index >= len(self.images):
+            self.kill()
+
+        
+
 class Star(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super(Star,self).__init__()
@@ -78,6 +106,7 @@ class EnemySprite(pygame.sprite.Sprite):
         x, y = self.rect.center
         if pygame.mixer.get_init():
             self.explosion_sound.play(maxtime=1000)
+            Explosion(x, y)
         super(EnemySprite, self).kill()
 class StatusSprite(pygame.sprite.Sprite):
     def __init__(self, ship, groups):
@@ -162,7 +191,6 @@ def main():
     pygame.font.init()
     pygame.mixer.init()
     screen = pygame.display.set_mode((X_MAX, Y_MAX), DOUBLEBUF)
-    everything = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     weapon_fire = pygame.sprite.Group()
 
