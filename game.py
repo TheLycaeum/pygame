@@ -2,7 +2,7 @@ import random
 import sys
 
 import pygame
-from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN
+from pygame.locals import Rect, DOUBLEBUF, QUIT, K_ESCAPE, KEYDOWN, K_DOWN, K_LEFT, K_UP, K_RIGHT, KEYUP, K_LCTRL, K_RETURN, FULLSCREEN
 
 X_MAX = 800
 Y_MAX = 600
@@ -51,16 +51,28 @@ class Star(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.velocity = 1
         self.size = 1
+        self.colour = 128
     
     def accelerate(self):
-        if self.size < 20:
-            self.size += 1
-            self.image = pygame.Surface((self.size, self.size))
-            pygame.draw.line(self.image, (128, 128, 128), (0,0), (0, self.size))
+        self.image = pygame.Surface((1, self.size))
 
-        if self.velocity < Y_MAX/5:
+        if self.size < 200:
+            self.size += 4
+            self.colour += 20
+            if self.colour >= 200:
+                self.colour = random.randint(180, 200)
+        else:
+            self.colour -= 30
+            if self.colour <= 20:
+                self.colour = random.randrange(20)
+
+        pygame.draw.line(self.image, (self.colour, self.colour, self.colour), (0,0), (0, self.size))
+
+        if self.velocity < Y_MAX/3:
             self.velocity += 1
 
+        # x, y = self.rect.center
+        # self.rect.center = random.randrange(X_MAX), y
         
     
     def update(self):
@@ -242,7 +254,7 @@ def main():
     status = StatusSprite(ship, everything)
 
     deadtimer = 30
-    credits_timer = 150
+    credits_timer = 250
 
     for i in range(10):
         pos = random.randint(0, X_MAX)
@@ -315,7 +327,7 @@ def main():
                 i.kill()
                 ship.score += 10
         
-        if len(enemies) < 40 and not game_over:
+        if len(enemies) < 20 and not game_over:
             pos = random.randint(0, X_MAX)
             EnemySprite(pos, [everything, enemies])
 
@@ -329,6 +341,7 @@ def main():
             ship.shoot(STOP)
 
         if game_over:
+            pygame.mixer.music.fadeout(4000)
             for i in stars:
                 i.accelerate()
             if credits_timer:
